@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>vue</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <script src="./node_modules/vue/dist/vue.js"></script>
+</head>
+
+<body>
+    <div id="watch-example">
+        <p v-bind:class="classobj">
+            Ask a yes/no question:
+            <input v-model="question">
+        </p>
+        <p>{{ answer }}</p>
+        <template v-if="loginType === 'username'">
+            <label>Username</label>
+            <input placeholder="Enter your username">
+        </template>
+        <template v-else>
+            <label>Email</label>
+            <input placeholder="Enter your email address">
+        </template>
+        <p>
+            <input type="button" v-on:click="toggleType" value="change">
+        </p>
+    </div>
+    <div id="example-3" class="demo">
+        <input type="checkbox" id="jack" value="Jack" v-model="checkedNames">
+        <label for="jack">Jack</label>
+        <input type="checkbox" id="john" value="John" v-model="checkedNames">
+        <label for="john">John</label>
+        <input type="checkbox" id="mike" value="Mike" v-model="checkedNames">
+        <label for="mike">Mike</label>
+        <br>
+        <span>Checked names: {{ checkedNames }}</span>
+    </div>
+    <div id="example-4" class="demo">
+        <input type="radio" id="one" value="One" v-model="picked">
+        <label for="one">One</label>
+        <br>
+        <input type="radio" id="two" value="Two" v-model="picked">
+        <label for="two">Two</label>
+        <br>
+        <span>Picked: {{ picked }}</span>
+    </div>
+    <script src="https://unpkg.com/axios@0.12.0/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/lodash@4.13.1/lodash.min.js"></script>
+    <script>
+    var watchExampleVM = new Vue({
+        el: '#watch-example',
+        data: {
+            question: '',
+            answer: 'I cannot give you an answer until you ask a question!',
+            a: {
+                active: true,
+                cur: true
+            },
+            loginType: 'username'
+        },
+        computed: {
+            classobj: function() {
+                if (this.a.active) {
+                    return {
+                        cur: true
+                    }
+                };
+            }
+        },
+        watch: {
+            // 如果 question 发生改变，这个函数就会运行
+            question: function(newQuestion) {
+                this.answer = 'Waiting for you to stop typing...'
+                this.getAnswer()
+            }
+        },
+        methods: {
+            // _.debounce 是一个通过 lodash 限制操作频率的函数。
+            // 在这个例子中，我们希望限制访问yesno.wtf/api的频率
+            // ajax请求直到用户输入完毕才会发出
+            // 学习更多关于 _.debounce function (and its cousin
+            // _.throttle), 参考: https://lodash.com/docs#debounce
+            getAnswer: _.debounce(
+                function() {
+                    var vm = this
+                    if (this.question.indexOf('?') === -1) {
+                        vm.answer = 'Questions usually contain a question mark. ;-)'
+                        return
+                    }
+                    vm.answer = 'Thinking...'
+                    axios.get('https://yesno.wtf/api')
+                        .then(function(response) {
+                            vm.answer = _.capitalize(response.data.answer)
+                        })
+                        .catch(function(error) {
+                            vm.answer = 'Error! Could not reach the API. ' + error
+                        })
+                },
+                // 这是我们为用户停止输入等待的毫秒数
+                500
+            ),
+            toggleType: function() {
+                this.loginType = this.loginType === 'username' ? 'email' : 'username';
+            }
+        }
+    });
+    new Vue({
+        el: '#example-3',
+        data: {
+            checkedNames: []
+        }
+    });
+    new Vue({
+        el: '#example-4',
+        data: {
+            picked: ''
+        }
+    });
+    </script>
+</body>
+
+</html>
